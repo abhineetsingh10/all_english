@@ -115,6 +115,103 @@
 
     /* row label column stays readable at narrow widths */
     .row-label { user-select: none; }
+    .tts-key-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 13px;
+    }
+    .tts-key-label { color: #555; font-weight: 600; }
+    #googleKey {
+      padding: 4px 8px;
+      font-size: 13px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      width: 300px;
+      font-family: monospace;
+    }
+    .tts-key-hint { color: #aaa; font-size: 12px; }
+
+    .audio-hint {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .slider-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .slider-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: 480px;
+    }
+    #milestoneSlider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #ddd;
+      outline: none;
+      cursor: pointer;
+      accent-color: #1976D2;
+    }
+    #milestoneSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #1976D2;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    #milestoneSlider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0 0;
+    }
+    .slider-ticks span {
+      font-size: 10px;
+      color: #888;
+      width: 0;
+      display: flex;
+      justify-content: center;
+      white-space: nowrap;
+    }
+    .milestone-badge {
+      background: #1976D2;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      min-width: 38px;
+      text-align: center;
+    }
+    #playBtn {
+      padding: 4px 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: #1976D2;
+      color: white;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #playBtn:hover { background: #1565C0; }
+    #playBtn.playing { background: #E53935; }
+    .row-label { user-select: none; }
   </style>
 </head>
 
@@ -133,6 +230,9 @@
     <span><span class="dot" style="background:#E0E0E0; border:1px solid #ccc;"></span> Not yet seen</span>
   </div>
 
+  <!-- AUDIO HINT -->
+  <div class="audio-hint">&#128266; Click the speaker icon on any cell to hear the phoneme pronounced</div>
+
   <!-- CONTROLS -->
   <div class="controls">
     <label for="viewMode">View:</label>
@@ -140,9 +240,24 @@
 
     <label for="userSelect">Child:</label>
     <select id="userSelect"></select>
+  </div>
 
-    <label for="milestoneSelect">Up to milestone:</label>
-    <select id="milestoneSelect"></select>
+  <!-- MILESTONE SLIDER -->
+  <div class="slider-row">
+    <button id="playBtn" title="Play / Pause">&#9654;</button>
+    <label for="milestoneSlider">Milestone:</label>
+    <div class="slider-wrap">
+      <input type="range" id="milestoneSlider" min="0" value="0" step="1" />
+      <div class="slider-ticks" id="sliderTicks"></div>
+    </div>
+    <span id="milestoneLabel" class="milestone-badge">M0</span>
+  </div>
+
+  <!-- GOOGLE TTS KEY -->
+  <div class="tts-key-row">
+    <span class="tts-key-label">&#127988; Google API key for Indian female voice</span>
+    <input type="password" id="googleKey" placeholder="AIza... (optional, stays in browser)" autocomplete="off" />
+    <span class="tts-key-hint">Leave blank to use browser fallback</span>
   </div>
 
   <!-- SVG -->

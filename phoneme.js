@@ -162,7 +162,10 @@ function showTip(event, ph, rowId) {
     not_seen : "Not yet seen"
   }[state];
 
+  const audio = PHONEME_WORDS[ph.character];
   let html = `<strong>${ph.character}</strong><br>${ph.label}<br>`;
+  if (audio) html += `Example: <em>${audio.word}</em> <span style="font-size:11px;opacity:0.7">(${audio.hint})</span><br>`;
+  html += `<span style="font-size:11px;opacity:0.75">&#128266; Click speaker icon to hear</span><br>`;
 
   if (viewMode === "single") {
     html += `Status: <em>${stateLabel}</em>`;
@@ -271,13 +274,54 @@ function buildControls() {
 
   const maxM = d3.max(fullData, d => d.acquired_milestone ?? d.first_seen_milestone ?? 0);
 
-  d3.select("#milestoneSelect")
-    .selectAll("option").data(d3.range(0, maxM + 1)).enter()
-    .append("option").attr("value", d => d).text(d => `M${d}`);
+  const slider = document.getElementById("milestoneSlider");
+  const milestoneLabel = document.getElementById("milestoneLabel");
+  const playBtn = document.getElementById("playBtn");
+  const ticksContainer = document.getElementById("sliderTicks");
 
-  d3.select("#milestoneSelect").on("change", function () {
-    selectedMilestone = +this.value;
+  slider.max = maxM;
+  slider.value = 0;
+
+  for (let i = 0; i <= maxM; i++) {
+    const tick = document.createElement("span");
+    tick.textContent = `M${i}`;
+    ticksContainer.appendChild(tick);
+  }
+
+  function setMilestone(val) {
+    selectedMilestone = val;
+    slider.value = val;
+    milestoneLabel.textContent = `M${val}`;
     redraw();
+  }
+
+  slider.addEventListener("input", function () { setMilestone(+this.value); });
+
+  let playTimer = null;
+  const PLAY_INTERVAL_MS = 900;
+
+  playBtn.addEventListener("click", function () {
+    if (playTimer) {
+      clearInterval(playTimer);
+      playTimer = null;
+      playBtn.textContent = "\u25B6";
+      playBtn.classList.remove("playing");
+    } else {
+      if (selectedMilestone >= maxM) setMilestone(0);
+      playBtn.textContent = "\u23F8";
+      playBtn.classList.add("playing");
+      playTimer = setInterval(() => {
+        const next = selectedMilestone + 1;
+        if (next > maxM) {
+          clearInterval(playTimer);
+          playTimer = null;
+          playBtn.textContent = "\u25B6";
+          playBtn.classList.remove("playing");
+        } else {
+          setMilestone(next);
+        }
+      }, PLAY_INTERVAL_MS);
+    }
   });
 }
 
@@ -347,14 +391,41 @@ function buildChart(visibleRows) {
       .attr("fill", COLOR.not_seen);
 
     cellG.append("text")
+      .attr("class", "ph-symbol")
       .attr("x", CELL / 2)
-      .attr("y", CELL / 2 + 1)
+      .attr("y", CELL / 2 - 2)
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "central")
       .style("font-size", `${CELL * 0.37}px`)
       .style("pointer-events", "none")
       .style("fill", "#444")
       .text(d => d.character);
+
+    const spkG = cellG.append("g")
+      .attr("class", "ph-speaker")
+      .attr("transform", `translate(${CELL - 13}, ${CELL - 13})`)
+      .style("cursor", "pointer")
+      .on("click", function (event, d) {
+        event.stopPropagation();
+        speakPhoneme(d.character);
+      })
+      .on("mouseenter", function () {
+        d3.select(this).select(".spk-bg").attr("fill-opacity", 0.32);
+      })
+      .on("mouseleave", function () {
+        d3.select(this).select(".spk-bg").attr("fill-opacity", 0.16);
+      });
+
+    spkG.append("circle")
+      .attr("class", "spk-bg")
+      .attr("r", 7).attr("cx", 0).attr("cy", 0)
+      .attr("fill", "#000").attr("fill-opacity", 0.16);
+
+    spkG.append("path")
+      .attr("d", "M-3.5,-2.5 L-3.5,2.5 L-1,2.5 L2,0.5 L2,-2.5 Z M3.2,-1.8 Q5,0 3.2,1.8")
+      .attr("fill", "#fff")
+      .attr("stroke", "none")
+      .style("pointer-events", "none");
   });
 }
 
@@ -376,7 +447,149 @@ function redraw() {
       .transition().duration(TRANS_MS)
       .attr("fill", fill);
 
-    node.select("text")
+    node.select(".ph-symbol")
       .style("fill", isLight ? "#444" : "#fff");
   });
+}
+// =====================================================
+// PHONEME → EXAMPLE WORD
+// =====================================================
+const PHONEME_WORDS = {
+  "iː" : { word: "sheep",   hint: "sh-EE-p"    },
+  "ɪ"  : { word: "sit",     hint: "s-I-t"       },
+  "e"  : { word: "red",     hint: "r-E-d"       },
+  "ɛ"  : { word: "bed",     hint: "b-E-d"       },
+  "æ"  : { word: "cat",     hint: "c-A-t"       },
+  "a"  : { word: "father",  hint: "f-A-ther"    },
+  "ɑː" : { word: "start",   hint: "st-AR-t"     },
+  "ɒ"  : { word: "hot",     hint: "h-O-t"       },
+  "ɔː" : { word: "thought", hint: "th-AW-t"     },
+  "ʊ"  : { word: "foot",    hint: "f-OO-t"      },
+  "uː" : { word: "goose",   hint: "g-OO-se"     },
+  "ʌ"  : { word: "strut",   hint: "str-U-t"     },
+  "ɜː" : { word: "nurse",   hint: "n-UR-se"     },
+  "ə"  : { word: "about",   hint: "uh-BOUT"     },
+  "eɪ" : { word: "face",    hint: "f-AY-ce"     },
+  "aɪ" : { word: "price",   hint: "pr-ICE"      },
+  "ɔɪ" : { word: "choice",  hint: "ch-OY-ce"    },
+  "əʊ" : { word: "goat",    hint: "g-OH-t"      },
+  "aʊ" : { word: "mouth",   hint: "m-OW-th"     },
+  "ɪə" : { word: "near",    hint: "n-EAR"       },
+  "eə" : { word: "square",  hint: "sq-AIR"      },
+  "ʊə" : { word: "cure",    hint: "c-OOR"       },
+  "p"  : { word: "pan",     hint: "P-an"        },
+  "b"  : { word: "bat",     hint: "B-at"        },
+  "t"  : { word: "top",     hint: "T-op"        },
+  "d"  : { word: "dog",     hint: "D-og"        },
+  "k"  : { word: "cat",     hint: "K-at"        },
+  "ɡ"  : { word: "go",      hint: "G-o"         },
+  "m"  : { word: "map",     hint: "M-ap"        },
+  "n"  : { word: "net",     hint: "N-et"        },
+  "ŋ"  : { word: "sing",    hint: "si-NG"       },
+  "f"  : { word: "fan",     hint: "F-an"        },
+  "v"  : { word: "van",     hint: "V-an"        },
+  "θ"  : { word: "thin",    hint: "TH-in"       },
+  "ð"  : { word: "this",    hint: "TH-is"       },
+  "s"  : { word: "sun",     hint: "S-un"        },
+  "z"  : { word: "zoo",     hint: "Z-oo"        },
+  "ʃ"  : { word: "ship",    hint: "SH-ip"       },
+  "ʒ"  : { word: "vision",  hint: "vi-ZH-ion"   },
+  "h"  : { word: "hat",     hint: "H-at"        },
+  "tʃ" : { word: "church",  hint: "CH-urch"     },
+  "dʒ" : { word: "judge",   hint: "J-udge"      },
+  "w"  : { word: "wet",     hint: "W-et"        },
+  "r"  : { word: "red",     hint: "R-ed"        },
+  "j"  : { word: "yes",     hint: "Y-es"        },
+  "l"  : { word: "leg",     hint: "L-eg"        },
+};
+
+// =====================================================
+// SPEAK  –  Web Speech API
+// =====================================================
+// Audio cache — avoids re-fetching repeated clicks
+const _audioCache = {};
+
+function flashCell(character) {
+  const cell = svgEl.select(`.ph-cell[data-char="${CSS.escape(character)}"]`);
+  cell.select(".spk-bg")
+    .transition().duration(120).attr("r", 10).attr("fill-opacity", 0.45)
+    .transition().duration(400).attr("r", 7).attr("fill-opacity", 0.16);
+}
+
+async function speakPhoneme(character) {
+  const entry = PHONEME_WORDS[character];
+  if (!entry) return;
+
+  flashCell(character);
+
+  const apiKey = document.getElementById("googleKey").value.trim();
+  if (apiKey) {
+    await speakGoogle(entry.word, apiKey, character);
+  } else {
+    speakBrowser(entry.word);
+  }
+}
+
+// ── Google Cloud TTS  (en-IN-Neural2-A — Indian female neural voice) ────────
+async function speakGoogle(word, apiKey, character) {
+  if (_audioCache[character]) {
+    _audioCache[character].currentTime = 0;
+    _audioCache[character].play();
+    return;
+  }
+  try {
+    const res = await fetch(
+      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          input: { text: word },
+          voice: {
+            languageCode: "en-IN",
+            name: "en-IN-Neural2-A",   // Indian female, highest quality
+            ssmlGender: "FEMALE"
+          },
+          audioConfig: {
+            audioEncoding: "MP3",
+            speakingRate: 0.85,        // slightly slower for phoneme clarity
+            pitch: 0.0
+          }
+        })
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.warn("Google TTS error:", err.error?.message || res.status);
+      speakBrowser(word);
+      return;
+    }
+
+    const { audioContent } = await res.json();  // base64 MP3
+    const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+    _audioCache[character] = audio;
+    audio.play();
+
+  } catch (e) {
+    console.warn("Google TTS failed:", e);
+    speakBrowser(word);
+  }
+}
+
+// ── Web Speech API fallback ──────────────────────────────────────────────────
+function speakBrowser(word) {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utt  = new SpeechSynthesisUtterance(word);
+  utt.lang   = "en-IN";
+  utt.rate   = 0.78;
+  utt.pitch  = 1.0;
+  const voices = window.speechSynthesis.getVoices();
+  const pick =
+    voices.find(v => v.lang === "en-IN") ||
+    voices.find(v => v.lang === "en-GB") ||
+    voices.find(v => v.lang.startsWith("en"));
+  if (pick) { utt.voice = pick; utt.lang = pick.lang; }
+  window.speechSynthesis.speak(utt);
 }
