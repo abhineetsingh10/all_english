@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>English IPA Phonemes – Syllable Acquisition</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #fafafa;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    /* ---- Legend ---- */
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      color: #444;
+      flex-wrap: wrap;
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* ---- Controls ---- */
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    select {
+      padding: 4px 8px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+    }
+
+    /* ---- Section labels ---- */
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      fill: #555;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* ---- Axis labels (consonant chart) ---- */
+    .axis-label {
+      font-size: 10px;
+      fill: #666;
+    }
+
+    /* ---- Tooltip ---- */
+    #tooltip {
+      position: fixed;
+      background: rgba(0,0,0,0.78);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      pointer-events: none;
+      display: none;
+      z-index: 999;
+      max-width: 220px;
+      line-height: 1.5;
+    }
+
+    svg {
+      display: block;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    /* row label column stays readable at narrow widths */
+    .row-label { user-select: none; }
+  </style>
+</head>
+
+<body>
+
+  <h1>English IPA Phonemes – Syllable Acquisition</h1>
+
+  <div class="subtitle">
+    Tracking how English phonemes are introduced and mastered across milestones
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <span><span class="dot" style="background:#43A047;"></span> Familiar (acquired by milestone)</span>
+    <span><span class="dot" style="background:#E53935;"></span> Seen (introduced, not yet mastered)</span>
+    <span><span class="dot" style="background:#E0E0E0; border:1px solid #ccc;"></span> Not yet seen</span>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <label for="viewMode">View:</label>
+    <select id="viewMode"></select>
+
+    <label for="userSelect">Child:</label>
+    <select id="userSelect"></select>
+
+    <label for="milestoneSelect">Up to milestone:</label>
+    <select id="milestoneSelect"></select>
+  </div>
+
+  <!-- SVG -->
+  <svg id="chart"></svg>
+
+  <!-- Tooltip -->
+  <div id="tooltip"></div>
+
+  <!-- D3 logic -->
+  <script src="phoneme.js"></script>
+
+
+</body>
+</html>
